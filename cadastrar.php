@@ -1,3 +1,9 @@
+<?php
+    require('config/conexao.php');
+
+
+?>
+
 <!doctype html>
 <html lang="pt-br">
 <head>
@@ -6,15 +12,21 @@
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="css/estilos.css">
-    <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <title>Cadastrar</title>
 </head>
 <body>
     <form>
-        <h2>Cadastrar</h2>
+        <h1>Cadastrar</h1>
+
+        <div class="erro-geral animate__animated animate__rubberBand">
+            Aqui vai o erro para o usuário
+        </div>
 
         <div class="input-group">
             <img class="input-icon" src="img/card.png" alt="">
             <input type="text" placeholder="Nome completo">
+            <div class="erro">Por favor informe um nome válido!</div>
         </div>
 
         <div class="input-group">
@@ -39,7 +51,7 @@
         </div>
 
         <button class="btn-blue" type="submit">Cadastrar</button>
-        <a href="index.html">Já tenho uma conta</a>
+        <a href="index.php">Já tenho uma conta</a>
     </form>
 </body>
 </html>
