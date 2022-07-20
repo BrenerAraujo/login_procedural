@@ -1,7 +1,72 @@
 <?php
-    require('config/conexao.php');
+require('config/conexao.php');
 
+//Verificar se a postagem existe de acordo com os campos
+if(isset($_POST['nome_completo']) && isset($_POST['email']) && isset($_POST['senha']) && isset($_POST['repete_senha'])) {
+    //Verificar se todos os campos foram preenchidos
+    if(empty($_POST['nome_completo']) OR empty($_POST['email']) OR empty($_POST['senha']) OR empty($_POST['repete_senha']) OR empty($_POST['termos'])) {
+        $erro_geral = "Todos os campos são obrigatórios!!";
+    } else {
+        //Receber valores vindo do post e limpar
+        $nome = limparPost($_POST['nome_completo']);
+        $email = limparPost($_POST['email']);
+        $senha = limparPost($_POST['senha']);
+        $senha_cript = sha1($senha);
+        $repete_senha = limparPost($_POST['repete_senha']);
+        $checkbox = limparPost($_POST['termos']);
 
+        //Verificar se nome é apenas letras e espaços
+        if(!preg_match("/^[a-zA-Z-' ]*$/", $nome)) {
+            $erro_nome = "Somente permitido letras e espaços no nome";
+        }
+
+        //Verificar se email é válido
+        if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $erro_email = "Formato de e-mail inválido";
+        }
+
+        //Verificar se senha tem mais de 6 dígitos
+        if(strlen($senha) < 6) {
+            $erro_senha = "Senha deve ter pelo menos 6 caracteres";
+        }
+
+        //Verificar se repete senha é igual a senha
+        if($senha !== $repete_senha) {
+            $erro_repete_senha = "Senha e repetição de senha diferentes";
+        }
+
+        //Verificar se checkbox foi marcado
+        if($checkbox !== "ok") {
+            $erro_checkbox = "A marcação do campo é obrigatória";
+        }
+
+        //Verificando se não há nenhum erro
+        if(!isset($erro_geral) && !isset($erro_nome) && !isset($erro_email) && !isset($erro_senha) && !isset($erro_repete_senha) && !isset($erro_checkbox)) {
+            //Verificar se o e-mail já está cadastrado
+            $sql = $pdo->prepare("SELECT * FROM usuarios WHERE email = ? LIMIT 1");
+            $sql->execute(array($email));
+            $usuario = $sql->fetch();
+
+            //Se não existir o usuário, adicionar no banco
+            if(!$usuario) {
+                $recupera_senha = "";
+                $token = "";
+                $status = "novo";
+                $data_cadastro = date('d/m/Y');
+
+                $sql = $pdo->prepare("INSERT INTO usuarios VALUES (null, ?, ?, ?, ?, ?, ?, ?)");
+
+                if($sql->execute(array($nome, $email, $senha_cript, $recupera_senha, $token, $status, $data_cadastro))) {
+                    header('location: index.php?result=ok');
+                }
+            } else {
+                //Já existe usuário. Apresentar erro
+                $erro_geral = "Email já cadastrado";
+            }
+
+        }
+    }
+}
 ?>
 
 <!doctype html>
@@ -16,38 +81,54 @@
     <title>Cadastrar</title>
 </head>
 <body>
-    <form>
+    <form method="post">
         <h1>Cadastrar</h1>
 
-        <div class="erro-geral animate__animated animate__rubberBand">
-            Aqui vai o erro para o usuário
-        </div>
+        <?php if(isset($erro_geral)) { ?>
+            <div class="erro-geral animate__animated animate__rubberBand">
+                <?php echo "$erro_geral"; ?>
+            </div>
+        <?php } ?>
 
         <div class="input-group">
             <img class="input-icon" src="img/card.png" alt="">
-            <input type="text" placeholder="Nome completo">
-            <div class="erro">Por favor informe um nome válido!</div>
+            <input type="text" name="nome_completo" <?php if(isset($erro_nome)){ echo 'class="error-input"';} ?> placeholder="Nome completo" <?php if(isset($_POST['nome_completo'])){ echo 'value="'.$_POST['nome_completo'].'"';} ?> required>
+            <?php if(isset($erro_nome)) { ?>
+                <div class="erro"><?php echo $erro_nome; ?></div>
+            <?php } ?>
         </div>
 
         <div class="input-group">
             <img class="input-icon" src="img/user.png" alt="">
-            <input type="email" placeholder="Seu melhor email">
+            <input type="email" name="email" <?php if(isset($erro_email)){ echo 'class="error-input"';} ?> placeholder="Seu melhor email" <?php if(isset($_POST['email'])){ echo 'value="'.$_POST['email'].'"';} ?> required>
+            <?php if(isset($erro_email)) { ?>
+                <div class="erro"><?php echo $erro_email; ?></div>
+            <?php } ?>
         </div>
 
         <div class="input-group">
             <img class="input-icon" src="img/lock.png" alt="">
-            <input type="password" placeholder="Senha de pelo menos 6 dígitos">
+            <input type="password" name="senha" <?php if(isset($erro_senha)){ echo 'class="error-input"';} ?> placeholder="Senha de pelo menos 6 dígitos" <?php if(isset($_POST['senha'])){ echo 'value="'.$_POST['senha'].'"';} ?> required>
+            <?php if(isset($erro_senha)) { ?>
+                <div class="erro"><?php echo $erro_senha; ?></div>
+            <?php } ?>
         </div>
 
         <div class="input-group">
             <img class="input-icon" src="img/lock_open.png" alt="">
-            <input type="password" placeholder="Repita a senha criada">
+            <input type="password" name="repete_senha" <?php if(isset($erro_repete_senha)){ echo 'class="error-input"';} ?> placeholder="Repita a senha criada" <?php if(isset($_POST['repete_senha'])){ echo 'value="'.$_POST['repete_senha'].'"';} ?> required>
+            <?php if(isset($erro_repete_senha)) { ?>
+                <div class="erro"><?php echo $erro_repete_senha; ?></div>
+            <?php } ?>
         </div>
 
-        <div class="input-group">
-            <input type="checkbox" id="termos" name="termos" value="ok">
+        <div class="input-group <?php if(isset($erro_checkbox)){ echo 'error-input';} ?>">
+            <input type="checkbox" id="termos" name="termos" value="ok" required>
             <label for="termos">Ao se cadastrar você concorda com a nossa <a class="link" href="#">Política de Privacidade</a> e
                 <a class="link" href="#">Termos de uso</a>.</label>
+            <?php if(isset($erro_checkbox)) { ?>
+                <div class="erro"><?php echo $erro_checkbox; ?></div>
+            <?php } ?>
         </div>
 
         <button class="btn-blue" type="submit">Cadastrar</button>
