@@ -36,16 +36,16 @@ if(isset($_GET['cod']) && !empty($_GET['cod'])) {
 
             //Verificando se não há nenhum erro
             if(!isset($erro_geral) && !isset($erro_senha) && !isset($erro_repete_senha)) {
-                //Verificar se o e-mail já está cadastrado
-                $sql = $pdo->prepare("SELECT * FROM usuarios WHERE email = ? LIMIT 1");
-                $sql->execute(array($email));
+                //Verificar se esta recuperação de senha existe
+                $sql = $pdo->prepare("SELECT * FROM usuarios WHERE recupera_senha = ? LIMIT 1");
+                $sql->execute(array($cod));
                 $usuario = $sql->fetch();
 
-                //Se não existir o usuário, adicionar no banco
+                //Se não existir
                 if(!$usuario) {
                     echo "Recuperação de senha inválido";
                 } else {
-                    //Já existe usuário. Apresentar erro
+                    //Se existir
                     $sql = $pdo->prepare("UPDATE usuarios SET senha = ? WHERE recupera_senha = ?");
                     if($sql->execute(array($senha_cript, $cod))) {
                         //Redirecionar para Login

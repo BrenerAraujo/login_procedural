@@ -18,6 +18,7 @@ if(isset($_POST['email']) && !empty($_POST['email'])) {
     $sql = $pdo->prepare("SELECT * FROM usuarios WHERE email = ? AND status = ? LIMIT 1 ");
     $sql->execute(array($email, $status));
     $usuario = $sql->fetch(PDO::FETCH_ASSOC);
+    $nome = $usuario['nome'];
 
     if($usuario) {
         //Existe usuário
@@ -36,7 +37,7 @@ if(isset($_POST['email']) && !empty($_POST['email'])) {
                 //Content
                 $mail->isHTML(true);                                  //Corpo do email como HTML
                 $mail->Subject = 'Recuperar senha!';            //Título do email
-                $mail->Body    = '<h1>Recuperar a senha:</h1><a style="background: green; color: white; text-decoration: none; padding: 20px; border-radius: 5px;" href="https://seusistema.com.br/recuperar-senha.php?codigo='.$cod.'">Recuperar a senha</a><br><br><p>Equipe de Login</p></p>';
+                $mail->Body    = '<h1>Recuperar a senha:</h1><a style="background: green; color: white; text-decoration: none; padding: 20px; border-radius: 5px;" href="https://seusistema.com.br/recuperar-senha.php?cod='.$cod.'">Recuperar a senha</a><br><br><p>Equipe de Login</p></p>';
 
                 $mail->send();
                 header('location: recupera-senha.html');
