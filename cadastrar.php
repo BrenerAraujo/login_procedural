@@ -1,6 +1,14 @@
 <?php
 require('config/conexao.php');
 
+//Requerimento do PHP Mailer
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'config/PHPMailer/src/Exception.php';
+require 'config/PHPMailer/src/PHPMailer.php';
+require 'config/PHPMailer/src/SMTP.php';
+
 //Verificar se a postagem existe de acordo com os campos
 if(isset($_POST['nome_completo']) && isset($_POST['email']) && isset($_POST['senha']) && isset($_POST['repete_senha'])) {
     //Verificar se todos os campos foram preenchidos
@@ -51,13 +59,39 @@ if(isset($_POST['nome_completo']) && isset($_POST['email']) && isset($_POST['sen
             if(!$usuario) {
                 $recupera_senha = "";
                 $token = "";
-                $status = "novo";
+                $codigo_confirmacao = uniqid();
+                $modo == "local" ? $status = "confirmado" : $status = "novo";
                 $data_cadastro = date('d/m/Y');
 
-                $sql = $pdo->prepare("INSERT INTO usuarios VALUES (null, ?, ?, ?, ?, ?, ?, ?)");
+                $sql = $pdo->prepare("INSERT INTO usuarios VALUES (null, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-                if($sql->execute(array($nome, $email, $senha_cript, $recupera_senha, $token, $status, $data_cadastro))) {
-                    header('location: index.php?result=ok');
+                if($sql->execute(array($nome, $email, $senha_cript, $recupera_senha, $token, $codigo_confirmacao, $status, $data_cadastro))) {
+                    //Se for em modo local
+                    if($modo == "local"){
+                        header('location: index.php?result=ok');
+                    }
+                    //Se o modo for produção
+                    if($modo == "producao") {
+                        //Enviar email para o usuário
+                        $mail = new PHPMailer(true);
+
+                        try {
+                            //Recipients
+                            $mail->setFrom('from@example.com', 'Sistema de Login');         //Quem está mandando o email
+                            $mail->addAddress($email, $nome);                               //Quem recebe o email
+
+                            //Content
+                            $mail->isHTML(true);                                  //Corpo do email como HTML
+                            $mail->Subject = 'Confirme seu cadastro!';            //Título do email
+                            $mail->Body    = '<h1>Por favor confirme seu e-mail abaixo</h1><a style="background: green; color: white; text-decoration: none; padding: 20px; border-radius: 5px;" href="https://seusistema.com.br/confirmacao.php?cod_confirm='.$codigo_confirmacao.'">Confirmar E-mail</a><br><br><p>Equipe de Login</p></p>';
+
+                            $mail->send();
+                            header('location: obrigado.html');
+
+                        } catch (Exception $e) {
+                            echo "Houve um problema ao enviar o e-mail de confirmação: {$mail->ErrorInfo}";
+                        }
+                    }
                 }
             } else {
                 //Já existe usuário. Apresentar erro

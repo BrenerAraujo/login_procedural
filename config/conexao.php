@@ -1,4 +1,6 @@
 <?php
+//Iniciando sessão
+session_start();
 
 //Dois modos possíveis. local e producao
 $modo = 'local';
@@ -30,4 +32,20 @@ function limparPost($dados){
     $dados = stripslashes($dados);
     $dados = htmlspecialchars($dados);
     return $dados;
+}
+
+function auth($tokenSessao) {
+    global $pdo;
+
+    //Verificar se tem autorização
+    $sql = $pdo->prepare("SELECT * FROM usuarios WHERE token = ? LIMIT 1");
+    $sql->execute(array($tokenSessao));
+
+    $usuario = $sql->fetch((PDO::FETCH_ASSOC));
+//Se não encontrar usuário
+    if(!$usuario) {
+        return false;
+    } else {
+        return $usuario;
+    }
 }
